@@ -1,0 +1,1 @@
+docs: Add detailed logic description to README.md on main branch
