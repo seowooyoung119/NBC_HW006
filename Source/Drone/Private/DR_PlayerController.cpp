@@ -2,14 +2,15 @@
 #include "EnhancedInputSubsystems.h"
 
 ADR_PlayerController::ADR_PlayerController()
-	:
-	DroneMappingContext(nullptr),
-	MoveAction(nullptr),
-	LookAction(nullptr),
-	MoveUPAction(nullptr),
-	MoveDOWNAction(nullptr),
-	RollRightAction(nullptr),
-	RollLeftAction(nullptr)
+	//:
+	//DroneMappingContext(nullptr),
+	//MoveAction(nullptr),
+	//LookAction(nullptr),
+	//MoveUPAction(nullptr),
+	//MoveDOWNAction(nullptr),
+	//RollRightAction(nullptr),
+	//RollLeftAction(nullptr)
+	//EngineStartAction(nullptr),
 {
 }
 

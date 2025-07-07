@@ -12,12 +12,12 @@
 // 드론 클래스의 생성자
 // 드론의 기본 컴포넌트들을 초기화하고 설정하는 역할
 ADR_Drone::ADR_Drone()
-	:
-	// 멤버 변수들을 nullptr로 초기화 (안전한 초기화)
-	Capsule(nullptr),
-	Mesh(nullptr),
-	SpringArm(nullptr),
-	Camera(nullptr)
+	//:
+	//// 멤버 변수들을 nullptr로 초기화 (안전한 초기화) - 엔진이 그냥 초기화 해줘서 할 필요가 없음.
+	//Capsule(nullptr),
+	//Mesh(nullptr),
+	//SpringArm(nullptr),
+	//Camera(nullptr)
 {
 	// 매 프레임마다 Tick 함수가 호출되도록 설정
 	// 중력, 지면 충돌 등을 실시간으로 처리하기 위해 필요
@@ -126,6 +126,13 @@ void ADR_Drone::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	// 좌측 롤 회전 (E 키)
 	check(PlayerController->RollLeftAction);
 	EnhancedInputComponent->BindAction(PlayerController->RollLeftAction, ETriggerEvent::Triggered, this, &ADR_Drone::RollLeft);
+
+	// 엔진 작동 (p 키)
+	check(PlayerController->EngineStartAction);
+	EnhancedInputComponent->BindAction(PlayerController->EngineStartAction, ETriggerEvent::Started, this, &ADR_Drone::EngineOnOff);
+
+
+
 }
 
 // 중력 적용 함수
@@ -205,23 +212,65 @@ void ADR_Drone::HandleGroundCollision()
 void ADR_Drone::ProcessHorizontalMovement(const FVector2D& MovementValue, float DeltaTime)
 {
 	// 지상/공중 상태에 따른 이동 속도 조절
-	// 공중에서는 조작이 더 어려워야 현실적
-	float CurrentMoveSpeed = bIsGrounded ? MoveSpeed : MoveSpeed * AirControlMultiplier;
+	// 공중에서는 조작이 더 어려워야 현실적 (Acceleration, Deceleration에 영향을 줄 수도 있음)
+	// 현재는 MaxSpeed에만 영향을 미치도록 합니다.
+	float CurrentMaxSpeed = bIsGrounded ? MaxSpeed : MaxSpeed * AirControlMultiplier;
+	float CurrentMinSpeed = bIsGrounded ? MinSpeed : MinSpeed * AirControlMultiplier;
+
 
 	// 입력값을 3D 벡터로 변환 (X: 전후, Y: 좌우, Z: 0)
-	FVector LocalMoveVector = FVector(MovementValue.X, MovementValue.Y, 0.0f);
+	FVector DesiredDirection = FVector(MovementValue.X, MovementValue.Y, 0.0f);
 
-	// 입력이 있을 때만 이동 처리
-	if (!LocalMoveVector.IsNearlyZero())
+	// 입력 방향 정규화 (대각선 이동 시 속도 균일하게)
+	if (!DesiredDirection.IsNearlyZero())
 	{
-		// 벡터를 정규화하여 대각선 이동 시 속도가 빨라지지 않도록 함
-		LocalMoveVector.Normalize();
+		DesiredDirection.Normalize();
+	}
 
-		// 최종 이동 벡터 계산 (속도 * 시간)
-		FVector MoveVector = LocalMoveVector * CurrentMoveSpeed * DeltaTime;
+	// ===================== 관성 및 엔진 힘 구현 로직 ===========================
 
-		// 드론의 로컬 좌표계 기준으로 이동 (드론이 바라보는 방향 기준)
-		AddActorLocalOffset(MoveVector, true); // true = 충돌 감지 활성화
+	// 현재 속도 (CurrentVelocity)와 원하는 방향 (DesiredDirection)을 사용하여
+	// 드론의 실제 속도를 업데이트합니다.
+
+	// 엔진 켜진 경우 
+	if (!DesiredDirection.IsNearlyZero() && true == bIsEngineOn)
+	{
+		// 목표 속도 (DesiredDirection 방향으로 CurrentMaxSpeed)
+		FVector TargetVelocity = DesiredDirection * CurrentMaxSpeed;
+
+		// CurrentVelocity를 TargetVelocity 방향으로 가속
+		CurrentVelocity = FMath::VInterpTo(CurrentVelocity, TargetVelocity, DeltaTime, Acceleration);
+
+		// 최소 속도 (MinSpeed) 이상을 유지하도록 강제 (옵션)
+		// 현재 속도가 너무 느려지면 MinSpeed를 보장
+		if (CurrentVelocity.Size() < CurrentMinSpeed && CurrentMinSpeed > 0.0f)
+		{
+			// 현재 방향으로 최소 속도만큼 밀어줌
+			CurrentVelocity = CurrentVelocity.GetSafeNormal() * CurrentMinSpeed;
+		}
+	}
+	// 2. 엔진 KILL 경우 
+	else if(false == bIsEngineOn)
+	{
+		// CurrentVelocity를 ZeroVector로 감속
+		CurrentVelocity = FMath::VInterpTo(CurrentVelocity, FVector::ZeroVector, DeltaTime, Deceleration);
+
+		// CurrentVelocity가 MinSpeed보다 작아지면 0으로 설정하여 완전히 멈추게 함
+		// 이렇게 하지 않으면 MinSpeed 이하의 미세한 속도로 계속 움직일 수 있음
+		if (CurrentVelocity.SizeSquared() < FMath::Square(CurrentMinSpeed * 0.5f)) // MinSpeed의 절반 제곱보다 작으면 멈춤
+		{
+			CurrentVelocity = FVector::ZeroVector;
+		}
+	}
+
+	// ===================== 폰 이동 처리 ===========================
+	// CurrentVelocity를 사용하여 드론을 움직입니다.
+	// 이는 매 프레임 Tick 함수에서 호출되므로, 지속적으로 이동하게 됩니다.
+	if (!CurrentVelocity.IsNearlyZero())
+	{
+		// 최종 이동 벡터 계산 (CurrentVelocity * DeltaTime)
+		// 드론의 로컬 좌표계 기준으로 이동
+		AddActorLocalOffset(CurrentVelocity * DeltaTime, true); // true = 충돌 감지 활성화
 	}
 }
 
@@ -242,6 +291,21 @@ void ADR_Drone::ProcessVerticalMovement(float VerticalInput, float DeltaTime)
 	{
 		// 위로 이동할 때 중력 속도 감소 (부드러운 상승)
 		VerticalVelocity = FMath::Max(0.0f, VerticalVelocity);
+	}
+}
+
+void ADR_Drone::EngineOnOff(const FInputActionValue& Value)
+{
+	bIsEngineOn = !bIsEngineOn; // 엔진 상태 토글 (켜져 있으면 끄고, 꺼져 있으면 킴)
+
+	if (true == bIsEngineOn) // 엔진이 켜졌을 때
+	{
+		GravityForce = 0.0f; // 중력 적용	 비활성화
+	}
+
+	else if (false == bIsEngineOn) // 엔진이 꺼졌을 때
+	{
+		GravityForce = -980.0f;
 	}
 }
 
@@ -293,8 +357,18 @@ void ADR_Drone::Look(const FInputActionValue& Value)
 	FQuat NewQuat = YawQuat * CurrentQuat * PitchQuat;
 	NewQuat.Normalize(); // 쿼터니언 정규화 (안정성 확보)
 
-	// 새로운 회전 적용
-	SetActorRotation(NewQuat);
+	// 엔진 토글
+	if (true == bIsEngineOn)
+	{
+		SetActorRotation(NewQuat);
+	}
+	else if (false == bIsEngineOn)
+	{
+		SpringArm->bUsePawnControlRotation = true;
+		AddControllerYawInput(LookValue.X * LookSpeed);
+		AddControllerPitchInput(LookValue.Y * LookSpeed);
+	}
+
 }
 
 // 우측 롤 회전 입력 처리 (Q 키)
@@ -315,7 +389,7 @@ void ADR_Drone::RollRight(const FInputActionValue& Value)
 		FQuat CurrentQuat = GetActorQuat();
 
 		// 롤 회전값 계산 (우측으로 회전)
-		float DeltaRoll = RollValue * RollSpeed * DeltaTime;
+		float DeltaRoll = -RollValue * RollSpeed * DeltaTime;
 
 		// 전진 벡터 축으로 회전하는 쿼터니언 생성
 		FQuat RollQuat = FQuat(FVector::ForwardVector, FMath::DegreesToRadians(DeltaRoll));
@@ -324,7 +398,16 @@ void ADR_Drone::RollRight(const FInputActionValue& Value)
 		FQuat NewQuat = CurrentQuat * RollQuat;
 		NewQuat.Normalize(); // 쿼터니언 정규화
 
-		SetActorRotation(NewQuat);
+
+		// 엔진 토글
+		if (true == bIsEngineOn)
+		{
+			SetActorRotation(NewQuat);
+		}
+		else if (false == bIsEngineOn)
+		{
+			// 안 함
+		}
 	}
 }
 
@@ -346,7 +429,7 @@ void ADR_Drone::RollLeft(const FInputActionValue& Value)
 		FQuat CurrentQuat = GetActorQuat();
 
 		// 롤 회전값 계산 (좌측으로 회전 = 음수)
-		float DeltaRoll = -RollValue * RollSpeed * DeltaTime;
+		float DeltaRoll = RollValue * RollSpeed * DeltaTime;
 
 		// 전진 벡터 축으로 회전하는 쿼터니언 생성
 		FQuat RollQuat = FQuat(FVector::ForwardVector, FMath::DegreesToRadians(DeltaRoll));
@@ -355,15 +438,28 @@ void ADR_Drone::RollLeft(const FInputActionValue& Value)
 		FQuat NewQuat = CurrentQuat * RollQuat;
 		NewQuat.Normalize(); // 쿼터니언 정규화
 
-		SetActorRotation(NewQuat);
+
+		// 엔진 토글
+		if (true == bIsEngineOn)
+		{
+			SetActorRotation(NewQuat);
+		}
+		else if (false == bIsEngineOn)
+		{
+			// 안함
+		}
 	}
 }
 
-// 수직 상승 입력 처리 (스페이스바)
+// 수직 상승 입력 처리 (쉬프트 키)
 void ADR_Drone::MoveUP(const FInputActionValue& Value)
 {
 	check(Controller); // 컨트롤러 존재 확인
 
+	if (false == bIsEngineOn)
+	{
+		return; // 엔진이 꺼져있으면 상승 입력 무시
+	}
 	// 입력값 가져오기
 	const float VerticalValue = Value.Get<float>();
 
@@ -375,11 +471,15 @@ void ADR_Drone::MoveUP(const FInputActionValue& Value)
 	}
 }
 
-// 수직 하강 입력 처리 (Ctrl 키)
+// 수직 하강 입력 처리 (스페이스바 키)
 void ADR_Drone::MoveDOWN(const FInputActionValue& Value)
 {
 	check(Controller); // 컨트롤러 존재 확인
 
+	if (false == bIsEngineOn)
+	{
+		return; // 엔진이 꺼져있으면 하강 입력 무시
+	}
 	// 입력값 가져오기
 	const float VerticalValue = Value.Get<float>();
 

@@ -60,21 +60,27 @@ protected:
     // ======================== 입력 처리 함수들 ========================
 
     // 전후좌우 이동 처리 함수 (WASD 키 또는 조이스틱)
+	UFUNCTION()
     void Move(const FInputActionValue& Value);
 
     // 마우스 또는 우 스틱으로 시점 회전 처리 함수
+    UFUNCTION()
     void Look(const FInputActionValue& Value);
 
     // 상승 입력 처리 함수 (스페이스바 또는 RT 트리거)
+    UFUNCTION()
     void MoveUP(const FInputActionValue& Value);
 
     // 하강 입력 처리 함수 (Shift 키 또는 LT 트리거)
+    UFUNCTION()
     void MoveDOWN(const FInputActionValue& Value);
 
     // 우측 롤링 입력 처리 함수 (E 키 또는 RB 버튼)
+    UFUNCTION()
     void RollRight(const FInputActionValue& Value);
 
     // 좌측 롤링 입력 처리 함수 (Q 키 또는 LB 버튼)
+    UFUNCTION()
     void RollLeft(const FInputActionValue& Value);
 
     // ======================== 이동 및 회전 관련 변수들 ========================
@@ -119,6 +125,30 @@ protected:
     UPROPERTY(BlueprintReadOnly, Category = "Status")
     float VerticalVelocity = 0.0f;
 
+	UPROPERTY(BlueprintReadOnly, Category = "Status")
+	bool bIsEngineOn = false; // 드론 엔진이 켜져 있는지 여부 (키 입력에 따라 상태 변경)
+
+    // ===================== 엔진 처리 변수들 ===========================
+
+    UPROPERTY(BlueprintReadOnly, Category = "Movement")
+	FVector CurrentVelocity= FVector::ZeroVector; // 현재 드론의 속도 벡터 (x, y, z 방향 속도)
+ 
+    UPROPERTY(BlueprintReadOnly, Category = "Movement")
+	FVector2D LastMovementInput; // 마지막으로 받은 수평 이동 입력 (2D 벡터, x: 전후, y: 좌우)
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	float MaxSpeed = 2000.0f; // 드론의 최대 속도 (cm/s 단위)
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	float MinSpeed = 500.0f; // 드론의 최소 속도 (cm/s 단위)
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	float Acceleration = 1000.0f; // 드론의 가속도 (cm/s² 단위)
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	float Deceleration = 1000.0f; // 드론의 감속도 (cm/s² 단위)
+
+
 private:
     // ======================== 내부 처리 함수들 ========================
 
@@ -136,4 +166,8 @@ private:
 
     // 수직 이동 (상하) 처리하는 함수
     void ProcessVerticalMovement(float VerticalInput, float DeltaTime);
+
+	// 엔진 시작/정지 처리 함수 (키 입력에 따라 엔진 상태 변경)
+	void EngineOnOff(const FInputActionValue& Value);
+
 };
