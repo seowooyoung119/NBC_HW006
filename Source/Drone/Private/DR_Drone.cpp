@@ -22,6 +22,9 @@ ADR_Drone::ADR_Drone()
 	// 매 프레임마다 Tick 함수가 호출되도록 설정
 	// 중력, 지면 충돌 등을 실시간으로 처리하기 위해 필요
 	PrimaryActorTick.bCanEverTick = true;
+	
+	// === 드론의 태그 설정 ===
+	Tags.Add(FName("Player"));
 
 	// === 캡슐 컴포넌트 설정 (충돌 처리용) ===
 	Capsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Capsule"));
@@ -364,11 +367,8 @@ void ADR_Drone::Look(const FInputActionValue& Value)
 	}
 	else if (false == bIsEngineOn)
 	{
-		SpringArm->bUsePawnControlRotation = true;
-		AddControllerYawInput(LookValue.X * LookSpeed);
-		AddControllerPitchInput(LookValue.Y * LookSpeed);
+		// 엔진이 꺼져있으면 회전하지 않음
 	}
-
 }
 
 // 우측 롤 회전 입력 처리 (Q 키)
