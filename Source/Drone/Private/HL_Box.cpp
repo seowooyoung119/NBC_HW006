@@ -10,6 +10,7 @@ void AHL_Box::BeginPlay()
 	Super::BeginPlay();
 
 	GetWorldTimerManager().SetTimer(TimerHandle_BoxTimer, this, &AHL_Box::ReverseRandomizePosition, ReverseTime, true);
+	GetWorldTimerManager().SetTimer(TimerHandle_BoxTimer, this, &AHL_Box::Hide_Seek, ReverseTime, true);
 
 	Position = RandomizePosition();
 	Rotate = RandomizeRotate();
@@ -25,12 +26,9 @@ void AHL_Box::Tick(float DeltaTime)
 
 void AHL_Box::DestroyHole()
 {
+	GetWorldTimerManager().ClearTimer(TimerHandle_BoxTimer);
+
 	Super::DestroyHole();
 
-	GetWorldTimerManager().ClearTimer(TimerHandle_BoxTimer);
 }
 
-void AHL_Box::ReverseRandomizePosition()
-{
-	Super::ReverseRandomizePosition();
-}

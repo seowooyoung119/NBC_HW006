@@ -11,6 +11,9 @@ void AHL_Circle::BeginPlay()
 	
 	GetWorldTimerManager().SetTimer(TimerHandle_CircleTimer, this, &AHL_Circle::ReverseRandomizePosition, ReverseTime, true);
 
+	SetActorHiddenInGame(false);
+	SetActorEnableCollision(true);
+
 	Position = RandomizePosition();
 	Rotate = RandomizeRotate();
 }
@@ -25,12 +28,8 @@ void AHL_Circle::Tick(float DeltaTime)
 
 void AHL_Circle::DestroyHole()
 {
+	GetWorldTimerManager().ClearTimer(TimerHandle_CircleTimer);
+
 	Super::DestroyHole();
 	
-	GetWorldTimerManager().ClearTimer(TimerHandle_CircleTimer);
-}
-
-void AHL_Circle::ReverseRandomizePosition()
-{
-	Super::ReverseRandomizePosition();
 }

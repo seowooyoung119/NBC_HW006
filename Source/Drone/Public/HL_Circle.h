@@ -16,7 +16,7 @@ public:
 	void BeginPlay() override;
 	void Tick(float DeltaTime) override;
 	void DestroyHole() override;
-	void ReverseRandomizePosition() override;
+
 private:
 	FTimerHandle TimerHandle_CircleTimer;
 

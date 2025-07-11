@@ -18,8 +18,6 @@ public:
 
 	void DestroyHole() override;
 
-	void ReverseRandomizePosition() override;
-
 private:
 	FTimerHandle TimerHandle_BoxTimer;
 

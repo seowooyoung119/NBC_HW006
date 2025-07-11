@@ -8,6 +8,8 @@
 #include "DR_PlayerController.h"
 #include "Engine/World.h"
 #include "Engine/Engine.h"
+#include "Components/AudioComponent.h"
+#include "Sound/SoundBase.h"
 
 // 드론 클래스의 생성자
 // 드론의 기본 컴포넌트들을 초기화하고 설정하는 역할
@@ -58,6 +60,16 @@ ADR_Drone::ADR_Drone()
 	bUseControllerRotationYaw = false;   // 좌우 회전 비활성화
 	bUseControllerRotationPitch = false; // 상하 회전 비활성화
 	bUseControllerRotationRoll = false;  // 롤 회전 비활성화
+
+
+	// === 사운드 컴포넌트 생성 및 설정 ===
+	AudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("AudioComponent"));
+	checkf(AudioComponent != nullptr, TEXT("AudioComponent OurAudioComponent is nullptr!"));
+	AudioComponent->SetupAttachment(Capsule); // 캡슐 컴포넌트에 부착
+	AudioComponent->bAutoActivate = false; // BeginPlay에서 재생하지 않음
+	AudioComponent->bAutoDestroy = false;  // 재생이 끝나면 컴포넌트가 자동으로 파괴되도록 설정
+	AudioComponent->SetVolumeMultiplier(1.0f); // 기본 볼륨 설정
+	AudioComponent->SetPitchMultiplier(1.0f);  // 기본 피치 설정
 }
 
 // 게임 시작 시 호출되는 함수
@@ -303,11 +315,25 @@ void ADR_Drone::EngineOnOff(const FInputActionValue& Value)
 
 	if (true == bIsEngineOn) // 엔진이 켜졌을 때
 	{
+		if (AudioComponent->IsPlaying()) // 이미 사운드가 재생 중이면
+		{
+			AudioComponent->Stop(); // 현재 사운드 정지
+		}
+
+		AudioComponent->SetSound(EngineONSound); // 엔진 켜짐 사운드 설정
+		AudioComponent->Play(); // 엔진 사운드 재생
+		
 		GravityForce = 0.0f; // 중력 적용	 비활성화
 	}
 
 	else if (false == bIsEngineOn) // 엔진이 꺼졌을 때
 	{
+		if (AudioComponent->IsPlaying()) // 이미 사운드가 재생 중이면
+		{
+			AudioComponent->Stop(); // 현재 사운드 정지
+		}
+		AudioComponent->SetSound(EngineOFFSound); // 엔진 꺼짐 사운드 설정
+		AudioComponent->Play(); // 엔진 사운드 재생
 		GravityForce = -980.0f;
 	}
 }

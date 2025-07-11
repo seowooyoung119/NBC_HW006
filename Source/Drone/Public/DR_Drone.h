@@ -10,7 +10,8 @@ class UArrowComponent;        // 드론의 방향 표시용 화살표 컴포넌트
 class UStaticMeshComponent;   // 드론의 3D 모델 메시 컴포넌트
 class USpringArmComponent;    // 카메라 붐 (SpringArm) 컴포넌트
 class UCameraComponent;       // 카메라 컴포넌트
-
+class UAudioComponent;       // 사운드 재생용 오디오 컴포넌트 (필요시 추가)
+class USoundBase;            // 사운드 베이스 클래스 (사운드 파일을 재생하기 위한 기본 클래스)
 /**
  * 드론 폰 클래스
  * APawn을 상속받아 플레이어가 직접 조종할 수 있는 드론을 구현
@@ -56,6 +57,10 @@ protected:
     // 플레이어가 드론을 보는 시점을 제공하는 카메라 컴포넌트
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
     UCameraComponent* Camera;
+
+	// 오디오 컴포넌트 (필요시 추가, 예: 드론 엔진 소리)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UAudioComponent* AudioComponent;
 
     // ======================== 입력 처리 함수들 ========================
 
@@ -148,6 +153,12 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	float Deceleration = 1000.0f; // 드론의 감속도 (cm/s² 단위)
 
+    // 엔진 시운드 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+    TObjectPtr<USoundBase> EngineONSound;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+    TObjectPtr<USoundBase> EngineOFFSound;
 
 private:
     // ======================== 내부 처리 함수들 ========================
