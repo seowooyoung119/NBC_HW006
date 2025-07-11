@@ -10,6 +10,8 @@
 #include "Engine/Engine.h"
 #include "Components/AudioComponent.h"
 #include "Sound/SoundBase.h"
+#include "Particles/ParticleSystemComponent.h"
+#include "Particles/ParticleSystem.h"
 
 // 드론 클래스의 생성자
 // 드론의 기본 컴포넌트들을 초기화하고 설정하는 역할
@@ -61,6 +63,13 @@ ADR_Drone::ADR_Drone()
 	bUseControllerRotationPitch = false; // 상하 회전 비활성화
 	bUseControllerRotationRoll = false;  // 롤 회전 비활성화
 
+	// === 드론의 파티클 시스템 컴포넌트 생성 및 설정 ===
+	OurParticleSystemComponent = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("OurParticleSystemComponent"));
+	checkf(OurParticleSystemComponent != nullptr, TEXT("ParticleSystemComponent OurParticleSystemComponent is nullptr!"));
+	SocketName = TEXT("EngineFire");
+	OurParticleSystemComponent->SetupAttachment(Capsule, SocketName);
+	OurParticleSystemComponent->bAutoActivate = false;
+	OurParticleSystemComponent->bAutoDestroy = false;
 
 	// === 사운드 컴포넌트 생성 및 설정 ===
 	AudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("AudioComponent"));
@@ -315,11 +324,13 @@ void ADR_Drone::EngineOnOff(const FInputActionValue& Value)
 
 	if (true == bIsEngineOn) // 엔진이 켜졌을 때
 	{
+		OurParticleSystemComponent->Activate(false);
+		OurParticleSystemComponent->Deactivate();
+
 		if (AudioComponent->IsPlaying()) // 이미 사운드가 재생 중이면
 		{
 			AudioComponent->Stop(); // 현재 사운드 정지
 		}
-
 		AudioComponent->SetSound(EngineONSound); // 엔진 켜짐 사운드 설정
 		AudioComponent->Play(); // 엔진 사운드 재생
 		
@@ -334,6 +345,9 @@ void ADR_Drone::EngineOnOff(const FInputActionValue& Value)
 		}
 		AudioComponent->SetSound(EngineOFFSound); // 엔진 꺼짐 사운드 설정
 		AudioComponent->Play(); // 엔진 사운드 재생
+
+		OurParticleSystemComponent->Activate(true);
+
 		GravityForce = -980.0f;
 	}
 }
@@ -514,5 +528,31 @@ void ADR_Drone::MoveDOWN(const FInputActionValue& Value)
 	{
 		float DeltaTime = GetWorld()->GetDeltaSeconds(); // 프레임 시간
 		ProcessVerticalMovement(-VerticalValue, DeltaTime); // 수직 이동 처리 (음수 = 하강)
+	}
+}
+
+void ADR_Drone::AttachParticleToComponent(USceneComponent* InParentComponent, FName AttachSocketName)
+{
+	checkf(InParentComponent != nullptr, TEXT("InParentComponent is null!"));
+	if (OurParticleSystemComponent && InParentComponent)
+	{
+		OurParticleSystemComponent->AttachToComponent(InParentComponent, FAttachmentTransformRules::SnapToTargetNotIncludingScale, AttachSocketName);
+		UE_LOG(LogTemp, Log, TEXT("Particle system attached to component: %s on socket: %s"), *InParentComponent->GetName(), *AttachSocketName.ToString());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Failed to attach particle system. OurParticleSystemComponent or InParentComponent is null."));
+	}
+}
+
+void ADR_Drone::AttachParticleToActor(AActor* ParentActor, FName AttachSocketName)
+{
+	if (OurParticleSystemComponent && ParentActor && ParentActor->GetRootComponent())
+	{
+		AttachParticleToComponent(ParentActor->GetRootComponent(), AttachSocketName);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Failed to attach particle system to actor. OurParticleSystemComponent or ParentActor is null, or ParentActor has no RootComponent."));
 	}
 }

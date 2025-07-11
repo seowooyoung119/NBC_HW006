@@ -12,6 +12,7 @@ class USpringArmComponent;    // 카메라 붐 (SpringArm) 컴포넌트
 class UCameraComponent;       // 카메라 컴포넌트
 class UAudioComponent;       // 사운드 재생용 오디오 컴포넌트 (필요시 추가)
 class USoundBase;            // 사운드 베이스 클래스 (사운드 파일을 재생하기 위한 기본 클래스)
+class UParticleSystemComponent; // 파티클 시스템 컴포넌트 (필요시 추가)
 /**
  * 드론 폰 클래스
  * APawn을 상속받아 플레이어가 직접 조종할 수 있는 드론을 구현
@@ -26,6 +27,10 @@ public:
     // 생성자: 드론 객체가 생성될 때 호출되는 함수
     ADR_Drone();
 
+    void AttachParticleToComponent(USceneComponent* ParentComponent, FName AttachSocketName = NAME_None);
+
+    void AttachParticleToActor(AActor* ParentActor, FName AttachSocketName = NAME_None);
+
 protected:
     // 게임이 시작될 때 한 번 호출되는 함수 (초기화 작업)
     virtual void BeginPlay() override;
@@ -37,6 +42,14 @@ protected:
     virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
     // ======================== 컴포넌트들 ========================
+
+	// 파티클 시스템 컴포넌트 (드론의 효과를 위한 파티클 시스템)
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Particles")
+    TObjectPtr <UParticleSystemComponent> OurParticleSystemComponent;
+
+	// 파티클 시스템 에셋 (드론의 효과를 위한 파티클 시스템 에셋)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Particles")
+    TObjectPtr<UParticleSystem> ParticleSystemAsset;
 
     // 충돌 처리를 위한 캡슐 컴포넌트 (드론의 물리적 경계)
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
@@ -159,6 +172,10 @@ protected:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
     TObjectPtr<USoundBase> EngineOFFSound;
+
+	// 파티클 시스템 소켓 이름 (드론의 파티클 효과를 부착할 소켓)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Particles")
+    FName SocketName;
 
 private:
     // ======================== 내부 처리 함수들 ========================
