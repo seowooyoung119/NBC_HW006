@@ -108,9 +108,12 @@ void AHole::OnOverlap(UPrimitiveComponent* OverlapComp, AActor* OtherActor, UPri
 
 void AHole::DestroyHole()
 {
+	UE_LOG(LogTemp, Warning, TEXT("AHole::DestroyHole called"));
 
 	if (ParticleSystemAsset && OurParticleSystemComponent)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("ParticleSystemAsset is valid, attaching particle system to actor."));
+
 		SetActorEnableCollision(false);
 		HoleMesh1->SetVisibility(false);
 		HoleMesh2->SetVisibility(false);
@@ -123,7 +126,6 @@ void AHole::DestroyHole()
 		ExplosionSoundComp->Play();
 
 	}
-
 
 
 	FTimerHandle DestroyTimerHandle;

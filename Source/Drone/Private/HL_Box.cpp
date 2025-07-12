@@ -29,6 +29,8 @@ void AHL_Box::DestroyHole()
 {
 	GetWorldTimerManager().ClearTimer(TimerHandle_BoxTimer);
 
+	UE_LOG(LogTemp, Warning, TEXT("AHL_Box::DestroyHole called"));
+
 	Super::DestroyHole();
 
 }
@@ -50,10 +52,11 @@ void AHL_Box::OnOverlap(UPrimitiveComponent* OverlapComp, AActor* OtherActor, UP
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Drone Engine Toggle: %s"), Drone->bIsEngineOn ? TEXT("On") : TEXT("Off"));
 			Drone->EngineOnOff(Drone->bIsEngineOn); // 엔진 상태를 변경하는 함수 호출
+			
+			DestroyHole();
 		}
 	}
 
-	Super::OnOverlap(OverlapComp, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 
 }
 
