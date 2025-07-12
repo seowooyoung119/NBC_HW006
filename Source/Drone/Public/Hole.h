@@ -67,13 +67,13 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
 	TObjectPtr<USoundBase> DestructionSound;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Hole|Settings")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hole|Settings")
 	FVector Position;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Hole|Settings")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hole|Settings")
 	FRotator Rotate;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Hole|Settings")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hole|Settings")
 	float ReverseTime;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Hole|Settings")

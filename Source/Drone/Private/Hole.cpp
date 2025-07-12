@@ -124,6 +124,8 @@ void AHole::DestroyHole()
 
 	}
 
+
+
 	FTimerHandle DestroyTimerHandle;
 	GetWorldTimerManager().SetTimer(DestroyTimerHandle, this, &AHole::FinishDestroyHole, 2.0f, false);
 }

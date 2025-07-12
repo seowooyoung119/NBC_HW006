@@ -143,8 +143,12 @@ protected:
     UPROPERTY(BlueprintReadOnly, Category = "Status")
     float VerticalVelocity = 0.0f;
 
+public:
+
 	UPROPERTY(BlueprintReadOnly, Category = "Status")
 	bool bIsEngineOn = false; // 드론 엔진이 켜져 있는지 여부 (키 입력에 따라 상태 변경)
+
+protected:
 
     // ===================== 엔진 처리 변수들 ===========================
 
@@ -194,6 +198,9 @@ private:
 
     // 수직 이동 (상하) 처리하는 함수
     void ProcessVerticalMovement(float VerticalInput, float DeltaTime);
+
+
+public:
 
 	// 엔진 시작/정지 처리 함수 (키 입력에 따라 엔진 상태 변경)
 	void EngineOnOff(const FInputActionValue& Value);

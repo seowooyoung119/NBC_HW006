@@ -20,6 +20,9 @@ void AHL_CircleSpawner::BeginPlay()
 		UE_LOG(LogTemp, Warning, TEXT("SpawnClasses array is empty!")); return;
 	}
 
+    // ·£´ý ½Ãµå 
+    FMath::SRandInit(FPlatformTime::Cycles());
+
     for (int i = 0; i < Count; ++i)
     {
         int32 Index = FMath::RandRange(0, SpawnClasses.Num() - 1);
