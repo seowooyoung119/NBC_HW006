@@ -37,11 +37,17 @@ void AHL_Box::DestroyHole()
 
 void AHL_Box::Hide_Seek()
 {
-	Super::Hide_Seek();
+	if(true == Stop) return;
+
+	Super::Hide_Seek();	
 }
 
 void AHL_Box::OnOverlap(UPrimitiveComponent* OverlapComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	if(false == this->GetActorEnableCollision()) return;
+
+	Stop = true;
+
 	if (OtherActor && OtherActor != this && OtherActor->ActorHasTag(TEXT("Player")))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Drone Engine Toggle Triggered!"));
@@ -52,8 +58,8 @@ void AHL_Box::OnOverlap(UPrimitiveComponent* OverlapComp, AActor* OtherActor, UP
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Drone Engine Toggle: %s"), Drone->bIsEngineOn ? TEXT("On") : TEXT("Off"));
 			Drone->EngineOnOff(Drone->bIsEngineOn); // 엔진 상태를 변경하는 함수 호출
-			
-			DestroyHole();
+		
+			AHL_Box::DestroyHole();
 		}
 	}
 

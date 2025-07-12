@@ -114,11 +114,17 @@ void AHole::DestroyHole()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("ParticleSystemAsset is valid, attaching particle system to actor."));
 
+
+		SetActorEnableCollision(true);
+		HoleMesh1->SetVisibility(true);
+		HoleMesh2->SetVisibility(true);
+
 		SetActorEnableCollision(false);
 		HoleMesh1->SetVisibility(false);
 		HoleMesh2->SetVisibility(false);
 
 		OurParticleSystemComponent->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+		OurParticleSystemComponent->SetVisibility(true);
 		OurParticleSystemComponent->Activate(true);
 		OurParticleSystemComponent->bAutoDestroy = true;
 
